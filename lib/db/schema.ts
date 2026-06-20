@@ -101,6 +101,7 @@ export const services = pgTable("services", {
   description: text("description"),
   priceCents: integer("priceCents").notNull().default(0),
   durationMin: integer("durationMin").notNull().default(30),
+  active: boolean("active").notNull().default(true), // soft delete — false = removido
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
 

@@ -47,15 +47,15 @@ Cada sprint tem escopo fechado, pode ser feito de forma independente e termina c
 
 **Tarefas:**
 
-- [ ] Criar `updateService(id, formData)` em `app/actions/petshops.ts`
+- [x] Criar `updateService(id, formData)` em `app/actions/petshops.ts`
   - Campos: `name`, `description`, `priceCents`, `durationMin`
   - Verificar `eq(services.userId, user.id)` antes de atualizar
-- [ ] Adicionar botão "Editar" no card do serviço em `components/petshop-manager.tsx`
+- [x] Adicionar botão "Editar" no card do serviço em `components/petshop-manager.tsx`
   - Reutilizar o `Dialog` de criação com `defaultValue`
-- [ ] Adicionar confirmação antes de `deleteService`
+- [x] Adicionar confirmação antes de `deleteService`
   - Bloquear se houver agendamentos `pending | confirmed` usando aquele `serviceId`
   - Mensagem: "Este serviço tem agendamentos ativos."
-- [ ] Adicionar flag `active` (boolean, default true) na tabela `services` no schema
+- [x] Adicionar flag `active` (boolean, default true) na tabela `services` no schema
   - Soft delete: `deleteService` apenas marca `active = false`
   - Agendamentos históricos mantêm a referência — o nome do serviço fica preservado
   - Filtrar `eq(services.active, true)` nas queries de listagem e booking
@@ -80,15 +80,15 @@ Cada sprint tem escopo fechado, pode ser feito de forma independente e termina c
 
 **Tarefas:**
 
-- [ ] Criar `updateMyProfile(formData)` em nova action `app/actions/profile.ts`
+- [x] Criar `updateMyProfile(formData)` em nova action `app/actions/profile.ts`
   - Campos: `name`, `phone`
   - Usar `db.update(user).set(...).where(eq(user.id, me.id))`
-- [ ] Criar `deleteMyAccount()` em `app/actions/profile.ts`
+- [x] Criar `deleteMyAccount()` em `app/actions/profile.ts`
   - Dialog de confirmação forte: campo de texto onde o usuário digita "EXCLUIR" para habilitar o botão
   - Ao confirmar: cancelar agendamentos futuros (`status = cancelled`) do tutor, depois deletar o usuário
   - O cascade do banco (`ON DELETE CASCADE` nas sessões e accounts) limpa os dados relacionados
-- [ ] Criar página `app/dashboard/profile/page.tsx` com o formulário
-- [ ] Adicionar link "Meu Perfil" no `components/dashboard-nav.tsx` para tutores
+- [x] Criar página `app/dashboard/profile/page.tsx` com o formulário
+- [x] Adicionar link "Meu Perfil" no `components/dashboard-nav.tsx` para tutores
 
 **Arquivos a tocar:**
 - criar `app/actions/profile.ts`

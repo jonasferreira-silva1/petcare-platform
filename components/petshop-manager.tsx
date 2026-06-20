@@ -2,14 +2,14 @@
 
 import { useState, useTransition } from "react"
 import dynamic from "next/dynamic"
-import { upsertMyPetshop, createService, deleteService } from "@/app/actions/petshops"
+import { upsertMyPetshop, createService, updateService, deleteService } from "@/app/actions/petshops"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
-import { Navigation, Plus, Trash2, Loader2, Clock, Tag } from "lucide-react"
+import { Navigation, Plus, Trash2, Loader2, Clock, Tag, Pencil } from "lucide-react"
 import { toast } from "sonner"
 
 const LocationPicker = dynamic(() => import("@/components/location-picker"), {
@@ -42,10 +42,80 @@ export type Service = {
 
 const DEFAULT_CENTER = { lat: -23.5505, lng: -46.6333 }
 
+// Formulário reutilizado para criar e editar serviço
+function ServiceForm({
+  defaultValues,
+  onSubmit,
+  isPending,
+  submitLabel,
+}: {
+  defaultValues?: Service
+  onSubmit: (formData: FormData) => void
+  isPending: boolean
+  submitLabel: string
+}) {
+  return (
+    <form action={onSubmit} className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="s-name">Nome</Label>
+        <Input
+          id="s-name"
+          name="name"
+          required
+          placeholder="Ex: Banho e tosa"
+          defaultValue={defaultValues?.name ?? ""}
+        />
+      </div>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="s-desc">Descrição</Label>
+        <Textarea
+          id="s-desc"
+          name="description"
+          defaultValue={defaultValues?.description ?? ""}
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="s-price">Preço (R$)</Label>
+          <Input
+            id="s-price"
+            name="price"
+            type="number"
+            step="0.01"
+            min="0"
+            defaultValue={
+              defaultValues ? (defaultValues.priceCents / 100).toFixed(2) : "0"
+            }
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="s-dur">Duração (min)</Label>
+          <Input
+            id="s-dur"
+            name="durationMin"
+            type="number"
+            min="5"
+            defaultValue={defaultValues?.durationMin ?? 30}
+          />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button type="submit" disabled={isPending} className="w-full">
+          {isPending ? "Salvando..." : submitLabel}
+        </Button>
+      </DialogFooter>
+    </form>
+  )
+}
+
 export function PetshopManager({ shop, services }: { shop: Petshop | null; services: Service[] }) {
   const [coords, setCoords] = useState(shop ? { lat: shop.lat, lng: shop.lng } : DEFAULT_CENTER)
   const [isPending, startTransition] = useTransition()
-  const [serviceOpen, setServiceOpen] = useState(false)
+
+  // Dialogs de serviço
+  const [createOpen, setCreateOpen] = useState(false)
+  const [editingService, setEditingService] = useState<Service | null>(null)
+  const [deletingService, setDeletingService] = useState<Service | null>(null)
 
   const handleSaveShop = (formData: FormData) => {
     formData.set("lat", String(coords.lat))
@@ -65,20 +135,36 @@ export function PetshopManager({ shop, services }: { shop: Petshop | null; servi
       try {
         await createService(formData)
         toast.success("Serviço adicionado!")
-        setServiceOpen(false)
+        setCreateOpen(false)
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Erro ao adicionar")
       }
     })
   }
 
-  const handleDeleteService = (id: number) => {
+  const handleUpdateService = (formData: FormData) => {
+    if (!editingService) return
     startTransition(async () => {
       try {
-        await deleteService(id)
+        await updateService(editingService.id, formData)
+        toast.success("Serviço atualizado!")
+        setEditingService(null)
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Erro ao atualizar")
+      }
+    })
+  }
+
+  const handleDeleteService = () => {
+    if (!deletingService) return
+    startTransition(async () => {
+      try {
+        await deleteService(deletingService.id)
         toast.success("Serviço removido")
-      } catch {
-        toast.error("Erro ao remover")
+        setDeletingService(null)
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Erro ao remover")
+        setDeletingService(null)
       }
     })
   }
@@ -162,7 +248,9 @@ export function PetshopManager({ shop, services }: { shop: Petshop | null; servi
             <h2 className="text-lg font-semibold text-foreground">Serviços</h2>
             <p className="text-sm text-muted-foreground">O que você oferece aos tutores</p>
           </div>
-          <Dialog open={serviceOpen} onOpenChange={setServiceOpen}>
+
+          {/* Dialog de criação */}
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger
               render={
                 <Button disabled={!shop}>
@@ -175,34 +263,62 @@ export function PetshopManager({ shop, services }: { shop: Petshop | null; servi
               <DialogHeader>
                 <DialogTitle>Novo serviço</DialogTitle>
               </DialogHeader>
-              <form action={handleCreateService} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="s-name">Nome</Label>
-                  <Input id="s-name" name="name" required placeholder="Ex: Banho e tosa" />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="s-desc">Descrição</Label>
-                  <Textarea id="s-desc" name="description" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="s-price">Preço (R$)</Label>
-                    <Input id="s-price" name="price" type="number" step="0.01" min="0" defaultValue="0" />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="s-dur">Duração (min)</Label>
-                    <Input id="s-dur" name="durationMin" type="number" min="5" defaultValue="30" />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit" disabled={isPending} className="w-full">
-                    {isPending ? "Salvando..." : "Salvar serviço"}
-                  </Button>
-                </DialogFooter>
-              </form>
+              <ServiceForm
+                onSubmit={handleCreateService}
+                isPending={isPending}
+                submitLabel="Salvar serviço"
+              />
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* Dialog de edição */}
+        <Dialog open={!!editingService} onOpenChange={(o) => !o && setEditingService(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Editar {editingService?.name}</DialogTitle>
+            </DialogHeader>
+            {editingService && (
+              <ServiceForm
+                defaultValues={editingService}
+                onSubmit={handleUpdateService}
+                isPending={isPending}
+                submitLabel="Salvar alterações"
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de confirmação de exclusão */}
+        <Dialog open={!!deletingService} onOpenChange={(o) => !o && setDeletingService(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Remover {deletingService?.name}?</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              O serviço será removido da listagem e do diálogo de agendamento. Atendimentos
+              anteriores continuam com o histórico preservado.
+            </p>
+            <DialogFooter className="flex gap-2 sm:flex-row">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setDeletingService(null)}
+                disabled={isPending}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1"
+                onClick={handleDeleteService}
+                disabled={isPending}
+              >
+                {isPending ? "Removendo..." : "Sim, remover"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {!shop ? (
           <Card className="py-10 text-center">
@@ -218,15 +334,27 @@ export function PetshopManager({ shop, services }: { shop: Petshop | null; servi
               <Card key={s.id} className="flex flex-col gap-2 p-4">
                 <div className="flex items-start justify-between">
                   <h3 className="font-medium text-foreground">{s.name}</h3>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteService(s.id)}
-                    disabled={isPending}
-                    aria-label={`Remover ${s.name}`}
-                  >
-                    <Trash2 className="h-4 w-4 text-muted-foreground" />
-                  </Button>
+                  {/* Ações: editar + excluir */}
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setEditingService(s)}
+                      disabled={isPending}
+                      aria-label={`Editar ${s.name}`}
+                    >
+                      <Pencil className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setDeletingService(s)}
+                      disabled={isPending}
+                      aria-label={`Remover ${s.name}`}
+                    >
+                      <Trash2 className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  </div>
                 </div>
                 {s.description && <p className="text-sm text-muted-foreground">{s.description}</p>}
                 <div className="mt-auto flex items-center gap-4 pt-2 text-sm">

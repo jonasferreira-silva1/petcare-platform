@@ -1,9 +1,9 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { petshops, services } from "@/lib/db/schema"
+import { petshops, services, appointments } from "@/lib/db/schema"
 import { requireUser } from "@/lib/session"
-import { and, eq } from "drizzle-orm"
+import { and, eq, inArray } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 // Get the pet shop owned by the current (petshop-role) user, if any.
@@ -42,7 +42,11 @@ export async function upsertMyPetshop(formData: FormData) {
 
 export async function getMyServices() {
   const user = await requireUser()
-  return db.select().from(services).where(eq(services.userId, user.id))
+  // Retorna apenas serviços ativos (soft delete: active = false fica oculto)
+  return db
+    .select()
+    .from(services)
+    .where(and(eq(services.userId, user.id), eq(services.active, true)))
 }
 
 export async function createService(formData: FormData) {
@@ -64,12 +68,59 @@ export async function createService(formData: FormData) {
     description,
     priceCents: Math.round((Number.isNaN(price) ? 0 : price) * 100),
     durationMin: Number.isNaN(durationMin) ? 30 : durationMin,
+    active: true,
   })
+  revalidatePath("/dashboard/petshop")
+}
+
+export async function updateService(id: number, formData: FormData) {
+  const user = await requireUser()
+  const name = String(formData.get("name") ?? "").trim()
+  const description = String(formData.get("description") ?? "").trim() || null
+  const price = Number(formData.get("price") ?? 0)
+  const durationMin = Number(formData.get("durationMin") ?? 30)
+
+  if (!name) throw new Error("Nome do serviço é obrigatório")
+
+  await db
+    .update(services)
+    .set({
+      name,
+      description,
+      priceCents: Math.round((Number.isNaN(price) ? 0 : price) * 100),
+      durationMin: Number.isNaN(durationMin) ? 30 : durationMin,
+    })
+    .where(and(eq(services.id, id), eq(services.userId, user.id)))
+
   revalidatePath("/dashboard/petshop")
 }
 
 export async function deleteService(id: number) {
   const user = await requireUser()
-  await db.delete(services).where(and(eq(services.id, id), eq(services.userId, user.id)))
+
+  // Bloquear se houver agendamentos ativos usando esse serviço
+  const active = await db
+    .select({ id: appointments.id })
+    .from(appointments)
+    .where(
+      and(
+        eq(appointments.serviceId, id),
+        eq(appointments.petshopUserId, user.id),
+        inArray(appointments.status, ["pending", "confirmed"])
+      )
+    )
+    .limit(1)
+
+  if (active[0]) {
+    throw new Error("Este serviço tem agendamentos ativos. Conclua ou cancele-os antes de remover.")
+  }
+
+  // Soft delete: marca como inativo em vez de deletar fisicamente
+  // Agendamentos históricos mantêm a referência com o nome original
+  await db
+    .update(services)
+    .set({ active: false })
+    .where(and(eq(services.id, id), eq(services.userId, user.id)))
+
   revalidatePath("/dashboard/petshop")
 }

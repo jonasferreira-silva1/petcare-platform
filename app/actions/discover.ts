@@ -3,7 +3,7 @@
 import { db } from "@/lib/db"
 import { petshops, services } from "@/lib/db/schema"
 import { requireUser } from "@/lib/session"
-import { eq, sql } from "drizzle-orm"
+import { eq, sql, and } from "drizzle-orm"
 
 export type NearbyPetshop = {
   id: number
@@ -68,5 +68,8 @@ export async function getNearbyPetshops(lat?: number, lng?: number): Promise<Nea
 
 export async function getPetshopServices(petshopId: number) {
   await requireUser()
-  return db.select().from(services).where(eq(services.petshopId, petshopId))
+  return db
+    .select()
+    .from(services)
+    .where(and(eq(services.petshopId, petshopId), eq(services.active, true)))
 }

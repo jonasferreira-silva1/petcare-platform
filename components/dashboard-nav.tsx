@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { authClient } from "@/lib/auth-client"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { PawPrint, MapPin, CalendarDays, Store, LogOut, Dog } from "lucide-react"
+import { PawPrint, MapPin, CalendarDays, Store, LogOut, Dog, UserRound } from "lucide-react"
 
 type Role = "tutor" | "petshop"
 
@@ -13,11 +13,13 @@ const tutorLinks = [
   { href: "/dashboard/pets", label: "Meus Pets", icon: Dog },
   { href: "/dashboard/discover", label: "Buscar Pet Shops", icon: MapPin },
   { href: "/dashboard/appointments", label: "Agendamentos", icon: CalendarDays },
+  { href: "/dashboard/profile", label: "Meu Perfil", icon: UserRound },
 ]
 
 const petshopLinks = [
   { href: "/dashboard/petshop", label: "Meu Pet Shop", icon: Store },
   { href: "/dashboard/appointments", label: "Agenda", icon: CalendarDays },
+  { href: "/dashboard/profile", label: "Meu Perfil", icon: UserRound },
 ]
 
 export function DashboardNav({ role, name }: { role: Role; name: string }) {
