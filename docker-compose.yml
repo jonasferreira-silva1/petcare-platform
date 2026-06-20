@@ -1,0 +1,40 @@
+services:
+  # ── Banco de dados ────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: petcare-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: jonas1385
+      POSTGRES_DB: petcare
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"          # expõe localmente para usar com drizzle-kit studio
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d petcare"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Aplicação Next.js ─────────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: petcare-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy   # só sobe depois que o banco estiver pronto
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:jonas1385@postgres:5432/petcare
+      BETTER_AUTH_URL: http://localhost:3000
+      BETTER_AUTH_SECRET: meu-segredo-super-seguro-123456789
+      NODE_ENV: production
+
+volumes:
+  postgres_data:

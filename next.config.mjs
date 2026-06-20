@@ -6,6 +6,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Gera um bundle standalone para o Docker (inclui server.js próprio)
+  output: "standalone",
 }
 
 export default nextConfig

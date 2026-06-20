@@ -67,21 +67,80 @@ petcare/
 
 ## Pré-requisitos
 
-Antes de começar, você vai precisar de:
+Você tem duas formas de rodar o projeto. Escolha a que preferir:
 
-- **Node.js** 20 ou superior
-- **pnpm** (o projeto usa pnpm como package manager)
-- **PostgreSQL** rodando localmente ou em algum serviço cloud (Railway, Neon, Supabase, etc.)
+| | Docker | Local |
+|---|---|---|
+| Pré-requisitos | Docker Desktop | Node.js 22 + PostgreSQL + pnpm |
+| Banco de dados | Incluído automaticamente | Você cria manualmente |
+| Ideal para | Rodar rápido, sem instalar nada | Desenvolvimento ativo |
 
-Para instalar o pnpm caso ainda não tenha:
+---
+
+## Opção 1 — Docker (recomendado para rodar rápido)
+
+A forma mais simples. Um único comando sobe a aplicação e o banco PostgreSQL juntos, sem precisar instalar Node.js ou configurar banco.
+
+### Pré-requisitos
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado e rodando
+
+### 1. Clone o repositório
 
 ```bash
-npm install -g pnpm
+git clone <url-do-repositorio>
+cd petcare
+```
+
+### 2. Configure as variáveis de ambiente
+
+Crie um arquivo `.env` na raiz (ou edite o `docker-compose.yml` diretamente):
+
+```env
+DATABASE_URL=postgresql://postgres:sua_senha@postgres:5432/petcare
+BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_SECRET=um-segredo-longo-e-aleatorio-aqui
+```
+
+> Se quiser usar as credenciais padrão do `docker-compose.yml`, pode pular este passo — ele já vem configurado para funcionar do zero.
+
+### 3. Suba tudo
+
+```bash
+docker compose up -d
+```
+
+Isso vai:
+- Baixar a imagem do PostgreSQL 16
+- Fazer o build da aplicação Next.js
+- Criar o banco `petcare` com volume persistente
+- Aguardar o banco ficar saudável antes de subir o app
+- Criar todas as tabelas automaticamente na primeira inicialização
+
+Acesse [http://localhost:3000](http://localhost:3000).
+
+### Comandos úteis no Docker
+
+```bash
+# Ver logs da aplicação em tempo real
+docker compose logs -f app
+
+# Ver logs do banco
+docker compose logs -f postgres
+
+# Parar os containers (dados preservados)
+docker compose down
+
+# Parar e remover o volume do banco (⚠ apaga todos os dados)
+docker compose down -v
+
+# Rebuild após mudanças no código
+docker compose up -d --build
 ```
 
 ---
 
-## Rodando o projeto localmente
+## Opção 2 — Rodando localmente (para desenvolvimento)
 
 ### 1. Clone o repositório
 
@@ -95,6 +154,8 @@ cd petcare
 ```bash
 pnpm install
 ```
+
+> Para instalar o pnpm caso ainda não tenha: `npm install -g pnpm`
 
 ### 3. Configure as variáveis de ambiente
 
@@ -318,10 +379,12 @@ O que está planejado mas ainda não foi implementado:
 ## Scripts disponíveis
 
 ```bash
-pnpm dev      # Inicia o servidor de desenvolvimento em http://localhost:3000
-pnpm build    # Gera o build de produção
-pnpm start    # Inicia o servidor em modo produção
-pnpm lint     # Roda o ESLint
+pnpm dev        # Servidor de desenvolvimento em http://localhost:3000
+pnpm build      # Build de produção
+pnpm start      # Servidor em modo produção
+pnpm lint       # ESLint
+pnpm db:push    # Aplica o schema no banco (drizzle-kit push)
+pnpm db:studio  # Abre o Drizzle Studio para inspecionar o banco
 ```
 
 ---
