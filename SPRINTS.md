@@ -109,13 +109,13 @@ Cada sprint tem escopo fechado, pode ser feito de forma independente e termina c
 
 **Tarefas:**
 
-- [ ] Adicionar coluna `petshopNotes` (text, nullable) na tabela `appointments` em `lib/db/schema.ts`
-- [ ] Atualizar `updateAppointmentStatus` em `app/actions/appointments.ts` para aceitar `petshopNotes` opcional
-- [ ] No componente `components/petshop-appointments.tsx`, adicionar campo `<Textarea>` nas ações de confirmar e concluir
+- [x] Adicionar coluna `petshopNotes` (text, nullable) na tabela `appointments` em `lib/db/schema.ts`
+- [x] Atualizar `updateAppointmentStatus` em `app/actions/appointments.ts` para aceitar `petshopNotes` opcional
+- [x] No componente `components/petshop-appointments.tsx`, adicionar campo `<Textarea>` nas ações de confirmar e concluir
   - Placeholder: "Observação para o tutor (opcional) — ex: traga carteira de vacinação"
-- [ ] No componente `components/tutor-appointments.tsx`, exibir `petshopNotes` em destaque quando preenchida
+- [x] No componente `components/tutor-appointments.tsx`, exibir `petshopNotes` em destaque quando preenchida
   - Visual: bloco com fundo levemente colorido, ícone de mensagem, texto "Observação do pet shop:"
-- [ ] Incluir `petshopNotes` na query de `getTutorAppointments`
+- [x] Incluir `petshopNotes` na query de `getTutorAppointments`
 
 **Arquivos a tocar:**
 - `lib/db/schema.ts`

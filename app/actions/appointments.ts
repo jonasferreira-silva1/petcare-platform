@@ -57,6 +57,8 @@ export async function getTutorAppointments() {
       scheduledAt: appointments.scheduledAt,
       status: appointments.status,
       notes: appointments.notes,
+      // Retorna a observação inserida pelo pet shop para exibir ao tutor
+      petshopNotes: appointments.petshopNotes,
       petName: pets.name,
       serviceName: services.name,
       petshopName: petshops.name,
@@ -79,6 +81,8 @@ export async function getPetshopAppointments() {
       scheduledAt: appointments.scheduledAt,
       status: appointments.status,
       notes: appointments.notes,
+      // Retorna a observação inserida pelo próprio pet shop para exibição no painel
+      petshopNotes: appointments.petshopNotes,
       petName: pets.name,
       petSpecies: pets.species,
       serviceName: services.name,
@@ -93,12 +97,25 @@ export async function getPetshopAppointments() {
     .orderBy(desc(appointments.scheduledAt))
 }
 
-// Pet shop updates appointment status.
-export async function updateAppointmentStatus(id: number, status: "confirmed" | "cancelled" | "completed") {
+// Atualiza o status do agendamento, aceitando opcionalmente uma observação do pet shop
+export async function updateAppointmentStatus(
+  id: number,
+  status: "confirmed" | "cancelled" | "completed",
+  petshopNotes?: string
+) {
   const me = await requireUser()
+
+  // Prepara o objeto com os campos que serão atualizados no banco de dados
+  const updateFields: { status: string; petshopNotes?: string | null } = { status }
+
+  // Se o parâmetro petshopNotes for fornecido, grava o valor tratado (removendo espaços) ou nulo
+  if (petshopNotes !== undefined) {
+    updateFields.petshopNotes = petshopNotes.trim() || null
+  }
+
   await db
     .update(appointments)
-    .set({ status })
+    .set(updateFields)
     .where(and(eq(appointments.id, id), eq(appointments.petshopUserId, me.id)))
   revalidatePath("/dashboard/appointments")
 }

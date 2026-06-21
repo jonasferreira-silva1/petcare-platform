@@ -1,6 +1,7 @@
 /**
- * Aplica o schema no banco automaticamente (drizzle push).
- * Chamado no início do servidor via instrumentation.ts.
+ * Aplica o schema no banco automaticamente ao iniciar o servidor.
+ * Usa CREATE TABLE IF NOT EXISTS + ALTER TABLE ADD COLUMN IF NOT EXISTS
+ * para ser idempotente — pode rodar múltiplas vezes sem erro.
  */
 import { db } from "@/lib/db"
 import { sql } from "drizzle-orm"
@@ -98,8 +99,19 @@ const tables = [
   )`,
 ]
 
+// Colunas adicionadas após a criação inicial das tabelas (migrations incrementais)
+const alterations = [
+  // Sprint 2 — soft delete de serviços
+  `ALTER TABLE "services" ADD COLUMN IF NOT EXISTS "active" boolean NOT NULL DEFAULT true`,
+  // Sprint 4 — observações do pet shop nos agendamentos
+  `ALTER TABLE "appointments" ADD COLUMN IF NOT EXISTS "petshopNotes" text`,
+]
+
 export async function runMigrations() {
   for (const ddl of tables) {
+    await db.execute(sql.raw(ddl))
+  }
+  for (const ddl of alterations) {
     await db.execute(sql.raw(ddl))
   }
   console.log("✅ Banco de dados pronto")

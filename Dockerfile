@@ -23,6 +23,7 @@ COPY . .
 ENV DATABASE_URL=postgresql://placeholder:placeholder@placeholder:5432/petcare
 ENV BETTER_AUTH_URL=http://localhost:3000
 ENV BETTER_AUTH_SECRET=build-placeholder-secret-minimum-32chars
+ENV DOCKER_BUILD=1
 
 RUN pnpm build
 

@@ -166,4 +166,12 @@
   html {
     @apply font-sans;
   }
+  /* Garante que selects nativos usem as cores corretas do tema em qualquer OS/browser */
+  select {
+    color-scheme: inherit;
+  }
+  select option {
+    background-color: var(--card);
+    color: var(--foreground);
+  }
 }

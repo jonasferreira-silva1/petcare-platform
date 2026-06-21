@@ -116,5 +116,7 @@ export const appointments = pgTable("appointments", {
   scheduledAt: timestamp("scheduledAt").notNull(),
   status: text("status").notNull().default("pending"), // pending | confirmed | cancelled | completed
   notes: text("notes"),
+  // Observações ou orientações inseridas pelo pet shop ao confirmar ou concluir o agendamento
+  petshopNotes: text("petshopNotes"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })

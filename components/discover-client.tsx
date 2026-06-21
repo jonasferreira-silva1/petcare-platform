@@ -9,7 +9,6 @@ import { Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { MapPin, Navigation, Phone, Loader2, CalendarPlus } from "lucide-react"
 import { toast } from "sonner"
@@ -39,8 +38,8 @@ export function DiscoverClient({ pets }: { pets: Pet[] }) {
   // Booking dialog state
   const [bookingShop, setBookingShop] = useState<NearbyPetshop | null>(null)
   const [services, setServices] = useState<Service[]>([])
-  const [petId, setPetId] = useState<string>("")
-  const [serviceId, setServiceId] = useState<string>("")
+  const [petId, setPetId] = useState<string | null>(null)
+  const [serviceId, setServiceId] = useState<string | null>(null)
   const [scheduledAt, setScheduledAt] = useState("")
   const [isPending, startTransition] = useTransition()
 
@@ -72,8 +71,8 @@ export function DiscoverClient({ pets }: { pets: Pet[] }) {
 
   const openBooking = (shop: NearbyPetshop) => {
     setBookingShop(shop)
-    setServiceId("")
-    setPetId("")
+    setServiceId(null)
+    setPetId(null)
     setScheduledAt("")
     getPetshopServices(shop.id)
       .then((s) => setServices(s as Service[]))
@@ -192,34 +191,46 @@ export function DiscoverClient({ pets }: { pets: Pet[] }) {
           </DialogHeader>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <Label>Pet</Label>
-              <Select value={petId} onValueChange={setPetId}>
-                <SelectTrigger>
-                  <SelectValue placeholder={pets.length ? "Selecione o pet" : "Cadastre um pet primeiro"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {pets.map((p) => (
-                    <SelectItem key={p.id} value={String(p.id)}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="pet-select">Pet</Label>
+              <select
+                id="pet-select"
+                value={petId ?? ""}
+                onChange={(e) => setPetId(e.target.value || null)}
+                className="h-9 w-full rounded-lg border border-input bg-card text-foreground px-2.5 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="" disabled className="bg-card text-muted-foreground">
+                  {pets.length ? "Selecione o pet" : "Cadastre um pet primeiro"}
+                </option>
+                {pets.map((p) => (
+                  <option key={p.id} value={String(p.id)} className="bg-card text-foreground">
+                    {p.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="flex flex-col gap-2">
-              <Label>Serviço</Label>
-              <Select value={serviceId} onValueChange={setServiceId}>
-                <SelectTrigger>
-                  <SelectValue placeholder={services.length ? "Selecione o serviço" : "Sem serviços cadastrados"} />
-                </SelectTrigger>
-                <SelectContent>
+              <Label htmlFor="service-select">Serviço</Label>
+              {services.length === 0 ? (
+                <div className="flex items-center gap-2 rounded-lg border border-input bg-card px-3 py-2 text-sm text-muted-foreground">
+                  <span>Este pet shop ainda não cadastrou serviços.</span>
+                </div>
+              ) : (
+                <select
+                  id="service-select"
+                  value={serviceId ?? ""}
+                  onChange={(e) => setServiceId(e.target.value || null)}
+                  className="h-9 w-full rounded-lg border border-input bg-card text-foreground px-2.5 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/50"
+                >
+                  <option value="" disabled className="bg-card text-muted-foreground">
+                    Selecione o serviço
+                  </option>
                   {services.map((s) => (
-                    <SelectItem key={s.id} value={String(s.id)}>
+                    <option key={s.id} value={String(s.id)} className="bg-card text-foreground">
                       {s.name} — R$ {(s.priceCents / 100).toFixed(2)}
-                    </SelectItem>
+                    </option>
                   ))}
-                </SelectContent>
-              </Select>
+                </select>
+              )}
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="scheduledAt">Data e horário</Label>

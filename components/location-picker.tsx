@@ -4,12 +4,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 
-const pinIcon = L.divIcon({
-  className: "",
-  html: `<div style="background:oklch(0.6 0.118 183);width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,
-  iconSize: [28, 28],
-  iconAnchor: [14, 28],
-})
+// Removido pinIcon do escopo global para evitar erros de "window is not defined" no servidor (SSR)
 
 function ClickHandler({ onPick }: { onPick: (lat: number, lng: number) => void }) {
   useMapEvents({
@@ -27,6 +22,14 @@ export default function LocationPicker({
   value: { lat: number; lng: number }
   onChange: (lat: number, lng: number) => void
 }) {
+  // Inicializa o ícone do marcador dinamicamente no lado do cliente
+  const pinIcon = L.divIcon({
+    className: "",
+    html: `<div style="background:oklch(0.6 0.118 183);width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 28],
+  })
+
   return (
     <MapContainer
       center={[value.lat, value.lng]}

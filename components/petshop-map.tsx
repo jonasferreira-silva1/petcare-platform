@@ -6,21 +6,7 @@ import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import type { NearbyPetshop } from "@/app/actions/discover"
 
-// Custom marker icons (avoids broken default icon paths in bundlers).
-const shopIcon = L.divIcon({
-  className: "",
-  html: `<div style="background:oklch(0.6 0.118 183);width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,
-  iconSize: [28, 28],
-  iconAnchor: [14, 28],
-  popupAnchor: [0, -28],
-})
-
-const userIcon = L.divIcon({
-  className: "",
-  html: `<div style="background:oklch(0.77 0.16 70);width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 2px oklch(0.77 0.16 70)"></div>`,
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
-})
+// Removidos shopIcon e userIcon do escopo global para evitar "window is not defined" no servidor (SSR)
 
 function Recenter({ lat, lng }: { lat: number; lng: number }) {
   const map = useMap()
@@ -41,6 +27,22 @@ export default function PetshopMap({
   onSelect: (shop: NearbyPetshop) => void
   selectedId?: number | null
 }) {
+  // Inicializa os ícones de marcadores dinamicamente no lado do cliente
+  const shopIcon = L.divIcon({
+    className: "",
+    html: `<div style="background:oklch(0.6 0.118 183);width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 28],
+    popupAnchor: [0, -28],
+  })
+
+  const userIcon = L.divIcon({
+    className: "",
+    html: `<div style="background:oklch(0.77 0.16 70);width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 2px oklch(0.77 0.16 70)"></div>`,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+  })
+
   return (
     <MapContainer
       center={[center.lat, center.lng]}
