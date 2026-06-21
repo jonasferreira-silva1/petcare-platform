@@ -2,12 +2,16 @@ import { getSessionUser } from "@/lib/session"
 import { redirect } from "next/navigation"
 import { getTutorAppointments, getPetshopAppointments } from "@/app/actions/appointments"
 import { getUnreadCountsForUser } from "@/app/actions/messages"
+import { markAllNotificationsAsRead } from "@/app/actions/notifications"
 import { TutorAppointments } from "@/components/tutor-appointments"
 import { PetshopAppointments } from "@/components/petshop-appointments"
 
 export default async function AppointmentsPage() {
   const user = await getSessionUser()
   if (!user) redirect("/sign-in")
+
+  // Marca todas as notificações como lidas ao abrir a página de agendamentos
+  await markAllNotificationsAsRead().catch(() => {})
 
   if (user.role === "petshop") {
     const [appointments, unreadCounts] = await Promise.all([

@@ -2,6 +2,8 @@
 
 > Encontre o pet shop certo, agende o serviço certo, no horário certo — tudo em um só lugar.
 
+![Tela de Login do PetCare](public/login-screenshot.png)
+
 PetCare é uma plataforma web que conecta **tutores de pets** com **pet shops e clínicas veterinárias**. De um lado, donos de animais que precisam de praticidade para agendar banhos, tosas e consultas. Do outro, estabelecimentos que querem uma agenda digital simples e organizada. A plataforma serve os dois.
 
 ---
@@ -62,6 +64,15 @@ petcare/
 | Banco de dados | PostgreSQL |
 | Mapas | Leaflet + React Leaflet |
 | Deploy | Vercel |
+
+---
+
+## 🎨 Interface Visual e Experiência do Usuário (UX)
+
+O PetCare se preocupa com uma experiência do usuário (UX) premium e visualmente impactante. A tela de login e cadastro (`/sign-in` e `/sign-up`) foi projetada com:
+- **Painel em Glassmorphism Transparente**: Um painel central translúcido com desfoque de fundo (*backdrop-blur*) que se estende por toda a altura da tela, criando uma sensação moderna e limpa.
+- **Slideshow Responsivo de Pets**: Slideshows de imagens em alta definição que se ajustam automaticamente ao tamanho da tela. No desktop, as carinhas dos pets aparecem perfeitamente enquadradas nas laterais. No mobile, as fotos cobrem o fundo inteiro com um overlay escuro para priorizar o contraste do formulário.
+- **Prevenção de Autocompletar**: Técnicas de interceptação (*dummy hidden inputs*) combinadas com configurações de autocomplete para evitar que navegadores preencham automaticamente credenciais indesejadas no carregamento inicial da página.
 
 ---
 

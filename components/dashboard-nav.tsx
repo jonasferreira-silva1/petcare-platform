@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { authClient } from "@/lib/auth-client"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { PawPrint, MapPin, CalendarDays, Store, LogOut, Dog, UserRound } from "lucide-react"
+import { PawPrint, MapPin, CalendarDays, Store, LogOut, Dog, UserRound, Bell } from "lucide-react"
 
 type Role = "tutor" | "petshop"
 
@@ -22,7 +22,15 @@ const petshopLinks = [
   { href: "/dashboard/profile", label: "Meu Perfil", icon: UserRound },
 ]
 
-export function DashboardNav({ role, name }: { role: Role; name: string }) {
+export function DashboardNav({
+  role,
+  name,
+  unreadNotifications = 0,
+}: {
+  role: Role
+  name: string
+  unreadNotifications?: number
+}) {
   const pathname = usePathname()
   const router = useRouter()
   const links = role === "petshop" ? petshopLinks : tutorLinks
@@ -34,7 +42,7 @@ export function DashboardNav({ role, name }: { role: Role; name: string }) {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-card">
+    <header className="sticky top-0 z-30 border-b border-black/10 dark:border-white/10 bg-white/70 dark:bg-slate-900/60 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <div className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -47,17 +55,23 @@ export function DashboardNav({ role, name }: { role: Role; name: string }) {
           {links.map((link) => {
             const active = pathname === link.href
             const Icon = link.icon
+            const isAppointments = link.href === "/dashboard/appointments"
             return (
               <Link
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  "relative flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                   active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
                 <Icon className="h-4 w-4" />
                 {link.label}
+                {isAppointments && unreadNotifications > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-white leading-none">
+                    {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                  </span>
+                )}
               </Link>
             )
           })}
@@ -77,17 +91,23 @@ export function DashboardNav({ role, name }: { role: Role; name: string }) {
         {links.map((link) => {
           const active = pathname === link.href
           const Icon = link.icon
+          const isAppointments = link.href === "/dashboard/appointments"
           return (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                "flex flex-1 flex-col items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
+                "relative flex flex-1 flex-col items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
                 active ? "bg-primary/10 text-primary" : "text-muted-foreground",
               )}
             >
               <Icon className="h-4 w-4" />
               <span className="whitespace-nowrap">{link.label}</span>
+              {isAppointments && unreadNotifications > 0 && (
+                <span className="absolute -top-0.5 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-white leading-none">
+                  {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                </span>
+              )}
             </Link>
           )
         })}

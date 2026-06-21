@@ -5,6 +5,7 @@ import { messages, appointments } from "@/lib/db/schema"
 import { requireUser } from "@/lib/session"
 import { and, asc, eq, isNull, ne } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
+import { createNotification } from "@/app/actions/notifications"
 
 export type Message = {
   id: number
@@ -36,7 +37,7 @@ export async function sendMessage(appointmentId: number, content: string): Promi
   const trimmed = content.trim()
   if (!trimmed) throw new Error("Mensagem não pode ser vazia")
 
-  await assertAccess(appointmentId, me.id)
+  const apt = await assertAccess(appointmentId, me.id)
 
   await db.insert(messages).values({
     appointmentId,
@@ -44,6 +45,15 @@ export async function sendMessage(appointmentId: number, content: string): Promi
     senderRole: me.role,
     content: trimmed,
   })
+
+  // Notifica o outro lado sobre a nova mensagem
+  const recipientId = me.id === apt.tutorId ? apt.petshopUserId : apt.tutorId
+  await createNotification(
+    recipientId,
+    "new_message",
+    `Nova mensagem de ${me.role === "tutor" ? "tutor" : "pet shop"}`,
+    appointmentId
+  ).catch(() => {})
 
   revalidatePath("/dashboard/appointments")
 }

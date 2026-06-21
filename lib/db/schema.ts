@@ -127,6 +127,17 @@ export const reviews = pgTable("reviews", {
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
 
+// In-app notifications for tutors and petshops.
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: text("userId").notNull(),
+  type: text("type").notNull(), // "new_appointment" | "status_changed" | "new_message"
+  referenceId: integer("referenceId"),  // appointmentId
+  message: text("message").notNull(),
+  readAt: timestamp("readAt"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+})
+
 // Appointments booked by a tutor at a pet shop.
 export const appointments = pgTable("appointments", {
   id: serial("id").primaryKey(),

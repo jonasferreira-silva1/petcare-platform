@@ -117,6 +117,16 @@ const tables = [
     "comment" text,
     "createdAt" timestamp NOT NULL DEFAULT now()
   )`,
+  // Sprint 8 — notificações in-app
+  `CREATE TABLE IF NOT EXISTS "notifications" (
+    "id" serial PRIMARY KEY,
+    "userId" text NOT NULL,
+    "type" text NOT NULL,
+    "referenceId" integer,
+    "message" text NOT NULL,
+    "readAt" timestamp,
+    "createdAt" timestamp NOT NULL DEFAULT now()
+  )`,
 ]
 
 // Colunas adicionadas após a criação inicial das tabelas (migrations incrementais)

@@ -5,6 +5,7 @@ import { appointments, petshops, pets, services, user } from "@/lib/db/schema"
 import { requireUser } from "@/lib/session"
 import { and, desc, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
+import { createNotification } from "@/app/actions/notifications"
 
 // Tutor books an appointment.
 export async function createAppointment(formData: FormData) {
@@ -21,7 +22,6 @@ export async function createAppointment(formData: FormData) {
     throw new Error("Preencha todos os campos do agendamento")
   }
 
-  // Verify the pet belongs to the tutor.
   const petRows = await db
     .select()
     .from(pets)
@@ -29,12 +29,11 @@ export async function createAppointment(formData: FormData) {
     .limit(1)
   if (!petRows[0]) throw new Error("Pet inválido")
 
-  // Resolve petshop owner user id.
   const shopRows = await db.select().from(petshops).where(eq(petshops.id, petshopId)).limit(1)
   const shop = shopRows[0]
   if (!shop) throw new Error("Pet shop não encontrado")
 
-  await db.insert(appointments).values({
+  const [apt] = await db.insert(appointments).values({
     tutorId: me.id,
     petshopUserId: shop.userId,
     petshopId,
@@ -43,7 +42,15 @@ export async function createAppointment(formData: FormData) {
     scheduledAt: new Date(scheduledAtRaw),
     notes,
     status: "pending",
-  })
+  }).returning({ id: appointments.id })
+
+  // Notifica o pet shop sobre o novo agendamento
+  await createNotification(
+    shop.userId,
+    "new_appointment",
+    `${me.name} solicitou um agendamento`,
+    apt.id
+  ).catch(() => {})
 
   revalidatePath("/dashboard/appointments")
 }
@@ -105,10 +112,7 @@ export async function updateAppointmentStatus(
 ) {
   const me = await requireUser()
 
-  // Prepara o objeto com os campos que serão atualizados no banco de dados
   const updateFields: { status: string; petshopNotes?: string | null } = { status }
-
-  // Se o parâmetro petshopNotes for fornecido, grava o valor tratado (removendo espaços) ou nulo
   if (petshopNotes !== undefined) {
     updateFields.petshopNotes = petshopNotes.trim() || null
   }
@@ -117,6 +121,28 @@ export async function updateAppointmentStatus(
     .update(appointments)
     .set(updateFields)
     .where(and(eq(appointments.id, id), eq(appointments.petshopUserId, me.id)))
+
+  // Notifica o tutor sobre a mudança de status
+  const apt = await db
+    .select({ tutorId: appointments.tutorId })
+    .from(appointments)
+    .where(eq(appointments.id, id))
+    .limit(1)
+
+  if (apt[0]) {
+    const labels: Record<string, string> = {
+      confirmed: "confirmou seu agendamento",
+      cancelled: "recusou seu agendamento",
+      completed: "concluiu seu atendimento",
+    }
+    await createNotification(
+      apt[0].tutorId,
+      "status_changed",
+      `O pet shop ${labels[status] ?? "atualizou seu agendamento"}`,
+      id
+    ).catch(() => {})
+  }
+
   revalidatePath("/dashboard/appointments")
 }
 

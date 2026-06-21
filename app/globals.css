@@ -175,3 +175,12 @@
     color: var(--foreground);
   }
 }
+
+/* Animação slideshow de fotos de pets na tela de login */
+@keyframes bgSlide {
+  0%                              { opacity: 0; }
+  5%                              { opacity: 1; }
+  20%                             { opacity: 1; }
+  25%                             { opacity: 0; }
+  100%                            { opacity: 0; }
+}
