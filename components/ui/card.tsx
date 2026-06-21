@@ -2,6 +2,14 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Componente Card principal com estilização Glassmorphism Premium
+ * - bg-white/60 e bg-slate-900/40: transparências em modo claro/escuro
+ * - backdrop-blur-md: desfoque de fundo para efeito de vidro
+ * - rounded-2xl: cantos arredondados modernos
+ * - transition-all duration-300: transições suaves nas interações
+ * - hover:border-primary/40: efeito de brilho sutil na borda ao passar o mouse
+ */
 function Card({
   className,
   size = "default",
@@ -20,6 +28,9 @@ function Card({
   )
 }
 
+/**
+ * Componente de Cabeçalho do Card
+ */
 function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -33,6 +44,9 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/**
+ * Componente de Título do Card
+ */
 function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -46,6 +60,9 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/**
+ * Componente de Descrição do Card
+ */
 function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -56,6 +73,9 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/**
+ * Componente de Ação Adicional do Card (ex: botões no canto direito do header)
+ */
 function CardAction({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -69,6 +89,9 @@ function CardAction({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/**
+ * Componente de Conteúdo Principal do Card
+ */
 function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -79,6 +102,12 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/**
+ * Componente de Rodapé do Card
+ * - rounded-b-2xl: cantos arredondados na parte inferior combinando com o Card
+ * - border-t border-border/20: linha divisória suave
+ * - bg-muted/30: fundo levemente diferenciado
+ */
 function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
