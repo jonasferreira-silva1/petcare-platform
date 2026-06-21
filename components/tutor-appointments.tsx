@@ -3,14 +3,16 @@
 import { useState, useTransition } from "react"
 import { cancelMyAppointment } from "@/app/actions/appointments"
 import { getMessages, type Message } from "@/app/actions/messages"
+import { getMyReviewForAppointment } from "@/app/actions/reviews"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { CalendarDays, MapPin, PawPrint, Scissors, MessageSquare } from "lucide-react"
+import { CalendarDays, MapPin, PawPrint, Scissors, MessageSquare, Star } from "lucide-react"
 import { toast } from "sonner"
 import { statusLabel, statusVariant } from "@/lib/appointment-status"
 import { AppointmentChat } from "@/components/appointment-chat"
+import { ReviewForm } from "@/components/review-form"
 
 export type TutorAppointment = {
   id: number
@@ -39,6 +41,11 @@ export function TutorAppointments({
   const [chatAppointmentId, setChatAppointmentId] = useState<number | null>(null)
   const [chatMessages, setChatMessages] = useState<Message[]>([])
   const [loadingChat, setLoadingChat] = useState(false)
+
+  // Review state
+  const [reviewAppointmentId, setReviewAppointmentId] = useState<number | null>(null)
+  const [reviewPetshopName, setReviewPetshopName] = useState("")
+  const [reviewedIds, setReviewedIds] = useState<Set<number>>(new Set())
 
   const handleCancel = (id: number) => {
     startTransition(async () => {
@@ -127,6 +134,19 @@ export function TutorAppointments({
                     </span>
                   )}
                 </Button>
+                {a.status === "completed" && !reviewedIds.has(a.id) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setReviewAppointmentId(a.id)
+                      setReviewPetshopName(a.petshopName ?? "Pet Shop")
+                    }}
+                  >
+                    <Star className="h-4 w-4" />
+                    <span className="ml-1.5">Avaliar</span>
+                  </Button>
+                )}
                 {a.status !== "cancelled" && a.status !== "completed" && (
                   <Button
                     variant="outline"
@@ -176,6 +196,28 @@ export function TutorAppointments({
               currentUserId={currentUserId}
               currentRole="tutor"
               initialMessages={chatMessages}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de avaliação */}
+      <Dialog
+        open={reviewAppointmentId !== null}
+        onOpenChange={(o) => !o && setReviewAppointmentId(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Avaliar atendimento</DialogTitle>
+          </DialogHeader>
+          {reviewAppointmentId !== null && (
+            <ReviewForm
+              appointmentId={reviewAppointmentId}
+              petshopName={reviewPetshopName}
+              onSuccess={() => {
+                setReviewedIds((prev) => new Set([...prev, reviewAppointmentId!]))
+                setReviewAppointmentId(null)
+              }}
             />
           )}
         </DialogContent>

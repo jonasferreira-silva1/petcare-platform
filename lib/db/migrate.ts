@@ -107,6 +107,16 @@ const tables = [
     "createdAt" timestamp NOT NULL DEFAULT now(),
     "readAt" timestamp
   )`,
+  // Sprint 7 — avaliações pós-atendimento
+  `CREATE TABLE IF NOT EXISTS "reviews" (
+    "id" serial PRIMARY KEY,
+    "appointmentId" integer NOT NULL UNIQUE,
+    "tutorId" text NOT NULL,
+    "petshopId" integer NOT NULL,
+    "rating" integer NOT NULL,
+    "comment" text,
+    "createdAt" timestamp NOT NULL DEFAULT now()
+  )`,
 ]
 
 // Colunas adicionadas após a criação inicial das tabelas (migrations incrementais)

@@ -116,6 +116,17 @@ export const messages = pgTable("messages", {
   readAt: timestamp("readAt"),
 })
 
+// Reviews left by tutors after completed appointments.
+export const reviews = pgTable("reviews", {
+  id: serial("id").primaryKey(),
+  appointmentId: integer("appointmentId").notNull().unique(), // 1 review por agendamento
+  tutorId: text("tutorId").notNull(),
+  petshopId: integer("petshopId").notNull(),
+  rating: integer("rating").notNull(), // 1 a 5
+  comment: text("comment"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+})
+
 // Appointments booked by a tutor at a pet shop.
 export const appointments = pgTable("appointments", {
   id: serial("id").primaryKey(),
