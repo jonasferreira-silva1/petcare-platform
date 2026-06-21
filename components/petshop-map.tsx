@@ -6,8 +6,6 @@ import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import type { NearbyPetshop } from "@/app/actions/discover"
 
-// Removidos shopIcon e userIcon do escopo global para evitar "window is not defined" no servidor (SSR)
-
 function Recenter({ lat, lng }: { lat: number; lng: number }) {
   const map = useMap()
   useEffect(() => {
@@ -27,8 +25,16 @@ export default function PetshopMap({
   onSelect: (shop: NearbyPetshop) => void
   selectedId?: number | null
 }) {
-  // Inicializa os ícones de marcadores dinamicamente no lado do cliente
-  const shopIcon = L.divIcon({
+  // Pin do usuário — amarelo/âmbar
+  const userIcon = L.divIcon({
+    className: "",
+    html: `<div style="background:oklch(0.77 0.16 70);width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 2px oklch(0.77 0.16 70)"></div>`,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+  })
+
+  // Pin de pet shop cadastrado no PetCare — teal sólido, pode agendar
+  const petcareIcon = L.divIcon({
     className: "",
     html: `<div style="background:oklch(0.6 0.118 183);width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,
     iconSize: [28, 28],
@@ -36,11 +42,13 @@ export default function PetshopMap({
     popupAnchor: [0, -28],
   })
 
-  const userIcon = L.divIcon({
+  // Pin de pet shop do OSM — cinza outline, não pode agendar
+  const osmIcon = L.divIcon({
     className: "",
-    html: `<div style="background:oklch(0.77 0.16 70);width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 2px oklch(0.77 0.16 70)"></div>`,
-    iconSize: [18, 18],
-    iconAnchor: [9, 9],
+    html: `<div style="background:#64748b;width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.3);opacity:0.75"></div>`,
+    iconSize: [22, 22],
+    iconAnchor: [11, 22],
+    popupAnchor: [0, -22],
   })
 
   return (
@@ -56,25 +64,45 @@ export default function PetshopMap({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <Recenter lat={center.lat} lng={center.lng} />
+
+      {/* Pin da localização do usuário */}
       <Marker position={[center.lat, center.lng]} icon={userIcon}>
         <Popup>Você está aqui</Popup>
       </Marker>
+
+      {/* Pins dos pet shops */}
       {shops.map((shop) => (
         <Marker
-          key={shop.id}
+          key={`${shop.source}-${shop.id}`}
           position={[shop.lat, shop.lng]}
-          icon={shopIcon}
+          icon={shop.source === "osm" ? osmIcon : petcareIcon}
           eventHandlers={{ click: () => onSelect(shop) }}
         >
           <Popup>
-            <div style={{ minWidth: 140 }}>
+            <div style={{ minWidth: 150 }}>
               <strong>{shop.name}</strong>
+              {shop.source === "osm" && (
+                <span
+                  style={{
+                    marginLeft: 6,
+                    fontSize: 10,
+                    color: "#64748b",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: 4,
+                    padding: "1px 4px",
+                  }}
+                >
+                  não cadastrado
+                </span>
+              )}
               <br />
-              <span>{shop.address}</span>
+              <span style={{ color: "#64748b", fontSize: 12 }}>{shop.address}</span>
               {shop.distanceKm != null && (
                 <>
                   <br />
-                  <span>{shop.distanceKm.toFixed(1)} km de distância</span>
+                  <span style={{ color: "#64748b", fontSize: 12 }}>
+                    {shop.distanceKm.toFixed(1)} km de distância
+                  </span>
                 </>
               )}
             </div>

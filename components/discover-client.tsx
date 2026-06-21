@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react"
 import dynamic from "next/dynamic"
-import { getNearbyPetshops, getPetshopServices, type NearbyPetshop } from "@/app/actions/discover"
+import { getMergedPetshops, getPetshopServices, type NearbyPetshop } from "@/app/actions/discover"
 import { createAppointment } from "@/app/actions/appointments"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -45,7 +45,7 @@ export function DiscoverClient({ pets }: { pets: Pet[] }) {
 
   const load = (lat?: number, lng?: number) => {
     setLoading(true)
-    getNearbyPetshops(lat, lng)
+    getMergedPetshops(lat, lng)
       .then(setShops)
       .catch(() => toast.error("Erro ao carregar pet shops"))
       .finally(() => setLoading(false))
@@ -100,6 +100,9 @@ export function DiscoverClient({ pets }: { pets: Pet[] }) {
     })
   }
 
+  // OSM invite dialog state
+  const [inviteShop, setInviteShop] = useState<NearbyPetshop | null>(null)
+
   const sortedShops = useMemo(() => shops, [shops])
 
   return (
@@ -142,43 +145,61 @@ export function DiscoverClient({ pets }: { pets: Pet[] }) {
             </div>
           ) : sortedShops.length === 0 ? (
             <Card className="py-12 text-center">
-              <p className="text-sm text-muted-foreground">Nenhum pet shop cadastrado ainda.</p>
+              <p className="text-sm text-muted-foreground">Nenhum pet shop encontrado.</p>
             </Card>
           ) : (
-            sortedShops.map((shop) => (
-              <Card
-                key={shop.id}
-                className={`flex flex-col gap-2 p-4 transition-colors ${
-                  selected?.id === shop.id ? "border-primary" : ""
-                }`}
-                onMouseEnter={() => setSelected(shop)}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-medium text-foreground">{shop.name}</h3>
-                  {shop.distanceKm != null && (
-                    <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                      {shop.distanceKm.toFixed(1)} km
-                    </span>
-                  )}
-                </div>
-                {shop.description && <p className="text-sm text-muted-foreground">{shop.description}</p>}
-                <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <MapPin className="h-3.5 w-3.5 shrink-0" />
-                  {shop.address}
-                  {shop.city ? `, ${shop.city}` : ""}
-                </p>
-                {shop.phone && (
+            sortedShops.map((shop) => {
+              const isOsm = shop.source === "osm"
+              return (
+                <Card
+                  key={`${shop.source}-${shop.id}`}
+                  className={`flex flex-col gap-2 p-4 transition-colors ${
+                    selected?.id === shop.id && selected?.source === shop.source ? "border-primary" : ""
+                  }`}
+                  onMouseEnter={() => setSelected(shop)}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-medium text-foreground">{shop.name}</h3>
+                    {shop.distanceKm != null && (
+                      <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                        {shop.distanceKm.toFixed(1)} km
+                      </span>
+                    )}
+                  </div>
+                  {shop.description && <p className="text-sm text-muted-foreground">{shop.description}</p>}
                   <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <Phone className="h-3.5 w-3.5 shrink-0" />
-                    {shop.phone}
+                    <MapPin className="h-3.5 w-3.5 shrink-0" />
+                    {shop.address}
+                    {shop.city ? `, ${shop.city}` : ""}
                   </p>
-                )}
-                <Button size="sm" className="mt-1 w-full" onClick={() => openBooking(shop)}>
-                  <CalendarPlus className="h-4 w-4" />
-                  <span className="ml-1">Agendar serviço</span>
-                </Button>
-              </Card>
-            ))
+                  {shop.phone && (
+                    <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <Phone className="h-3.5 w-3.5 shrink-0" />
+                      {shop.phone}
+                    </p>
+                  )}
+
+                  {isOsm ? (
+                    // Pet shop do OSM — botão igual mas abre dialog de convite
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-1 w-full"
+                      onClick={() => setInviteShop(shop)}
+                    >
+                      <CalendarPlus className="h-4 w-4" />
+                      <span className="ml-1">Agendar serviço</span>
+                    </Button>
+                  ) : (
+                    // Pet shop cadastrado no PetCare — pode agendar normalmente
+                    <Button size="sm" className="mt-1 w-full" onClick={() => openBooking(shop)}>
+                      <CalendarPlus className="h-4 w-4" />
+                      <span className="ml-1">Agendar serviço</span>
+                    </Button>
+                  )}
+                </Card>
+              )
+            })
           )}
         </div>
       </div>
@@ -245,6 +266,51 @@ export function DiscoverClient({ pets }: { pets: Pet[] }) {
           <DialogFooter>
             <Button onClick={handleBook} disabled={isPending} className="w-full">
               {isPending ? "Agendando..." : "Confirmar agendamento"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Dialog de convite para pet shops do OSM */}
+      <Dialog open={!!inviteShop} onOpenChange={(o) => !o && setInviteShop(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Agendar em {inviteShop?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-muted-foreground">
+              Este estabelecimento ainda não está cadastrado no PetCare. Para agendar, você
+              precisa convidar o pet shop a criar uma conta.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Envie o link abaixo para o responsável — quando ele se cadastrar e adicionar
+              serviços, você poderá agendar normalmente.
+            </p>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-muted-foreground">Link de cadastro</Label>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 rounded-lg border border-input bg-muted/30 px-3 py-2 text-xs text-muted-foreground truncate">
+                  {typeof window !== "undefined"
+                    ? `${window.location.origin}/sign-up`
+                    : "/sign-up"}
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const link = `${window.location.origin}/sign-up`
+                    navigator.clipboard.writeText(link).then(() =>
+                      toast.success("Link copiado!")
+                    )
+                  }}
+                >
+                  Copiar
+                </Button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="w-full" onClick={() => setInviteShop(null)}>
+              Fechar
             </Button>
           </DialogFooter>
         </DialogContent>
