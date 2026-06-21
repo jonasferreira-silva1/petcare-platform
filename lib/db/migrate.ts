@@ -97,6 +97,16 @@ const tables = [
     "notes" text,
     "createdAt" timestamp NOT NULL DEFAULT now()
   )`,
+  // Sprint 5 — chat por agendamento
+  `CREATE TABLE IF NOT EXISTS "messages" (
+    "id" serial PRIMARY KEY,
+    "appointmentId" integer NOT NULL,
+    "senderId" text NOT NULL,
+    "senderRole" text NOT NULL,
+    "content" text NOT NULL,
+    "createdAt" timestamp NOT NULL DEFAULT now(),
+    "readAt" timestamp
+  )`,
 ]
 
 // Colunas adicionadas após a criação inicial das tabelas (migrations incrementais)

@@ -105,6 +105,17 @@ export const services = pgTable("services", {
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
 
+// Messages exchanged between tutor and petshop per appointment.
+export const messages = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  appointmentId: integer("appointmentId").notNull(),
+  senderId: text("senderId").notNull(),
+  senderRole: text("senderRole").notNull(), // "tutor" | "petshop"
+  content: text("content").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  readAt: timestamp("readAt"),
+})
+
 // Appointments booked by a tutor at a pet shop.
 export const appointments = pgTable("appointments", {
   id: serial("id").primaryKey(),
